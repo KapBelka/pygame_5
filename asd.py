@@ -2,7 +2,7 @@ import pygame
 import os
 
 
-SCREEN_SIZE = (300, 300)
+SCREEN_SIZE = (600, 300)
 
 
 def load_image(name, colorkey=None):
@@ -17,47 +17,37 @@ def load_image(name, colorkey=None):
     return image
 
 
-class Hero(pygame.sprite.Sprite):
-    def __init__(self, x, y, speed, *groups):
-        super().__init__(groups)
-        self.image = hero_image
-        self.rect = self.image.get_rect()
-        self.rect.topleft = (x, y)
-        self.speed = speed
-        self.action = None
-
-    def update(self):
-        if self.action:
-            if self.action == pygame.K_UP:
-                self.rect.y -= self.speed
-            if self.action == pygame.K_LEFT:
-                self.rect.x -= self.speed
-            if self.action == pygame.K_DOWN:
-                self.rect.y += self.speed
-            if self.action == pygame.K_RIGHT:
-                self.rect.x += self.speed
+def gameover():
+    gameover_screen = pygame.sprite.Sprite(all_sprites)
+    gameover_screen.image = gameover_image
+    gameover_screen.rect = gameover_screen.image.get_rect()
+    gameover_screen.rect.left = -600
+    return gameover_screen
 
 
 pygame.init()
 screen = pygame.display.set_mode(SCREEN_SIZE)
 fps = 30
-hero_image = load_image('creature.png', -1)
+gameover_image = load_image('gameover.png')
 all_sprites = pygame.sprite.Group()
-hero = Hero(0, 0, 10, all_sprites)
+GAMEOVER_EVENT = 30
+gameover_speed = 200
+pygame.time.set_timer(GAMEOVER_EVENT, 5000)
 running = True
 pygame.mouse.set_visible(False)
-pygame.time.Clock()
+clock = pygame.time.Clock()
+gameover_screen = None
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN:
-            hero.action = event.key
-        elif event.type == pygame.KEYUP:
-            if event.key == hero.action:
-                hero.action = None
-    all_sprites.update()
-    screen.fill(pygame.Color('black'))
+        if event.type == GAMEOVER_EVENT:
+            gameover_screen = gameover()
+    screen.fill(pygame.Color('blue'))
+    if gameover_screen:
+        gameover_screen.rect.x += gameover_speed / fps
+        if gameover_screen.rect.right >= 600:
+            gameover_screen = None
     all_sprites.draw(screen)
-    pygame.time.delay(fps)
+    clock.tick(fps)
     pygame.display.update()
