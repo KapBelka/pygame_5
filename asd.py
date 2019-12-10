@@ -3,7 +3,7 @@ import random
 import os
 
 
-SCREEN_SIZE = (500, 500)
+SCREEN_SIZE = (600, 95)
 
 
 def load_image(name, colorkey=None):
@@ -18,55 +18,39 @@ def load_image(name, colorkey=None):
     return image
 
 
-class Bomb(pygame.sprite.Sprite):
-    def __init__(self, x, y, *args):
+class Car(pygame.sprite.Sprite):
+    def __init__(self, x, y, speed, *args):
         super().__init__(args)
-        self.image = bomb_image
+        self.image = car_image
         self.rect = self.image.get_rect()
-        self.rect.topleft = (x, y)
-        self.is_boom = False
+        self.rect.center = (x, y)
+        self.speed = speed
+        self.direction = 1
 
-    def boom(self):
-        pos = self.rect.center
-        self.image = boom_image
-        self.rect = self.image.get_rect()
-        self.rect.center = pos
-        self.is_boom = True
-
-    def get_click(self, mouse_x, mouse_y):
-        if (self.rect.left <= mouse_x <= self.rect.right and
-                self.rect.top <= mouse_y <= self.rect.bottom and not self.is_boom):
-            self.boom()
-            return True
-        return False
+    def update(self):
+        self.rect.x += self.speed * self.direction
+        if not 0 <= self.rect.center[0] + self.direction * self.rect.width // 2 <= SCREEN_SIZE[0]:
+            self.image = pygame.transform.flip(self.image, True, False)
+            self.direction = -self.direction
 
 
 pygame.init()
 screen = pygame.display.set_mode(SCREEN_SIZE)
 all_sprites = pygame.sprite.Group()
-bomb_image = load_image('bomb.png')
-boom_image = load_image('boom.png')
+car_image = load_image('car2.png')
 # переменные
 fps = 30
-count_bomb = 20
+car_speed = 5
 running = True
-# Создание бомбочек
-bombs = []
-for i in range(count_bomb):
-    width, height = bomb_size = bomb_image.get_rect().size
-    x, y = random.randrange(SCREEN_SIZE[0] - width), random.randrange(SCREEN_SIZE[1] - height)
-    bombs.append(Bomb(x, y, all_sprites))
+# Создаём машину
+car = Car(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2, car_speed, all_sprites)
 # Функции pygame
 clock = pygame.time.Clock()
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == pygame.BUTTON_LEFT:
-                for bomb in bombs:
-                    if bomb.get_click(*event.pos):
-                        break  # Дабы если бомбы наложены не взрывались все
+    all_sprites.update()
     screen.fill(pygame.Color('white'))
     all_sprites.draw(screen)
     clock.tick(fps)
