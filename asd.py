@@ -1,13 +1,14 @@
 import pygame
+import random
 import os
 
 
-SCREEN_SIZE = (600, 300)
+SCREEN_SIZE = (500, 500)
 
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
-    image = pygame.image.load(fullname).convert()
+    image = pygame.image.load(fullname)
     if colorkey is not None:
         if colorkey == -1:
             colorkey = image.get_at((0, 0))
@@ -17,43 +18,56 @@ def load_image(name, colorkey=None):
     return image
 
 
-def gameover():
-    gameover_screen = pygame.sprite.Sprite(all_sprites)
-    gameover_screen.image = gameover_image
-    gameover_screen.rect = gameover_screen.image.get_rect()
-    gameover_screen.rect.left = -600
-    return gameover_screen
+class Bomb(pygame.sprite.Sprite):
+    def __init__(self, x, y, *args):
+        super().__init__(args)
+        self.image = bomb_image
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.is_boom = False
+
+    def boom(self):
+        pos = self.rect.center
+        self.image = boom_image
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
+        self.is_boom = True
+
+    def get_click(self, mouse_x, mouse_y):
+        if (self.rect.left <= mouse_x <= self.rect.right and
+                self.rect.top <= mouse_y <= self.rect.bottom and not self.is_boom):
+            self.boom()
+            return True
+        return False
 
 
 pygame.init()
 screen = pygame.display.set_mode(SCREEN_SIZE)
 all_sprites = pygame.sprite.Group()
-gameover_image = load_image('gameover.png')
+bomb_image = load_image('bomb.png')
+boom_image = load_image('boom.png')
 # переменные
 fps = 30
-gameover_speed = 200
+count_bomb = 20
 running = True
-is_gameover = False
-# Создаём событие gameover
-GAMEOVER_EVENT_ID = pygame.USEREVENT + 1
-gameover_event = pygame.event.Event(GAMEOVER_EVENT_ID, {})
-pygame.event.post(gameover_event)  # Добавляем наше событие в очередь
+# Создание бомбочек
+bombs = []
+for i in range(count_bomb):
+    width, height = bomb_size = bomb_image.get_rect().size
+    x, y = random.randrange(SCREEN_SIZE[0] - width), random.randrange(SCREEN_SIZE[1] - height)
+    bombs.append(Bomb(x, y, all_sprites))
 # Функции pygame
-pygame.mouse.set_visible(False)
 clock = pygame.time.Clock()
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == GAMEOVER_EVENT_ID:  # Обрабатывем наше собыите
-            gameover_screen = gameover()  # Создаём спрайт с изображением gameover
-            is_gameover = True  # Показываем что игра окончена
-    screen.fill(pygame.Color('blue'))
-    if is_gameover:
-        gameover_screen.rect.x += gameover_speed / fps  # Двигаем спрайт gameover
-        if gameover_screen.rect.right >= SCREEN_SIZE[0]:  # Как мы доходим до края экрана
-            gameover_screen.rect.topleft = (0, 0)  # Поставить спрайт в начале координат
-            is_gameover = False  # Отключаем этот блок кода
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == pygame.BUTTON_LEFT:
+                for bomb in bombs:
+                    if bomb.get_click(*event.pos):
+                        break  # Дабы если бомбы наложены не взрывались все
+    screen.fill(pygame.Color('white'))
     all_sprites.draw(screen)
     clock.tick(fps)
     pygame.display.update()
