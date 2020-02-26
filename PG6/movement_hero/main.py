@@ -123,6 +123,21 @@ class Player(pygame.sprite.Sprite):
             player.rect.x += player_speed
 
 
+class Camera:
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
+        print(self.dx, self.dy)
+
+
 if len(sys.argv) > 1:
     map_file = sys.argv[1]
     if not os.access('data/' + map_file, os.F_OK):
@@ -136,6 +151,7 @@ pygame.init()
 clock = pygame.time.Clock()
 start_screen()
 # переменные
+camera = Camera()
 player_speed = 5
 player, level_x, level_y = generate_level(load_level(map_file))
 # Функции pygame
@@ -149,6 +165,9 @@ while True:
             if player.key_event == event.key:
                 player.key_event = None
     all_sprites.update()
+    camera.update(player)
+    for sprite in all_sprites:
+        camera.apply(sprite)
     screen.fill(pygame.Color('white'))
     all_sprites.draw(screen)
     clock.tick(FPS)
