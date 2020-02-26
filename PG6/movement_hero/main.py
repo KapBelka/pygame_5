@@ -3,7 +3,7 @@ import os
 import sys
 
 
-SCREEN_SIZE = (WIDTH, HEIGHT) = (500, 500)
+SCREEN_SIZE = (WIDTH, HEIGHT) = (400, 400)
 FPS = 50
 screen = pygame.display.set_mode(SCREEN_SIZE)
 
@@ -128,14 +128,21 @@ class Camera:
         self.dx = 0
         self.dy = 0
 
-    def apply(self, obj):
+    def apply(self, obj, level_x, level_y):
         obj.rect.x += self.dx
         obj.rect.y += self.dy
+        if obj.rect.x > tile_width * (level_x - 1):
+            obj.rect.x -= tile_width * level_x
+        elif obj.rect.x < -tile_width:
+            obj.rect.x += tile_width * level_x
+        if obj.rect.y > tile_height * (level_y - 1):
+            obj.rect.y -= tile_height * level_y
+        elif obj.rect.y < -tile_height:
+           obj.rect.y += tile_height * level_y
 
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
-        print(self.dx, self.dy)
 
 
 if len(sys.argv) > 1:
@@ -167,7 +174,7 @@ while True:
     all_sprites.update()
     camera.update(player)
     for sprite in all_sprites:
-        camera.apply(sprite)
+        camera.apply(sprite, level_x, level_y)
     screen.fill(pygame.Color('white'))
     all_sprites.draw(screen)
     clock.tick(FPS)
