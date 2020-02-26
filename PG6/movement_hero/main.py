@@ -123,12 +123,21 @@ class Player(pygame.sprite.Sprite):
             player.rect.x += player_speed
 
 
+if len(sys.argv) > 1:
+    map_file = sys.argv[1]
+    if not os.access('data/' + map_file, os.F_OK):
+        print("ERROR: map file not found.")
+        terminate()
+else:
+    map_file = 'map.txt'
+
+
 pygame.init()
 clock = pygame.time.Clock()
 start_screen()
 # переменные
 player_speed = 5
-player, level_x, level_y = generate_level(load_level('map.txt'))
+player, level_x, level_y = generate_level(load_level(map_file))
 # Функции pygame
 while True:
     for event in pygame.event.get():
